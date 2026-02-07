@@ -1,0 +1,47 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.venv/
+venv/
+env/
+.env
+.Python
+pip-log.txt
+pip-delete-this-directory.txt
+.pytest_cache/
+.python-version
+
+# Node
+node_modules/
+dist/
+build/
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Docker
+docker-compose.override.yml
+
+# VS Code
+.history/
+
+# Local config that may contain secrets
+backend/easyberry_config.json
+frontend/.env
+
+# Logs and databases
+*.log
+*.sqlite3
+
+# Optional: cover build artifacts
+coverage/
+reports/
+

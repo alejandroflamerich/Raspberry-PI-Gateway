@@ -1,0 +1,9 @@
+Initial workspace sync: add Easyberry connector, debug endpoints, frontend Easyberry page, packet logging, UI fixes and remove Boron page.
+
+Changes include:
+- backend modules: easyberry auth, transport, connector, packet store, debug endpoints
+- frontend: Easyberry page (request/response log), Menu active-route sync, removed Boron page
+- scripts: push-to-github helpers and commit helpers
+- .gitignore added (exclude secrets like backend/easyberry_config.json)
+
+Run `git push` after this commit to upload to remote.

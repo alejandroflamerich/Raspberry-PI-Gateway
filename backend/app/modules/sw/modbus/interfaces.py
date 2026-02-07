@@ -1,0 +1,6 @@
+from typing import Protocol
+
+
+class IModbusTcpClient(Protocol):
+    def read_holding_registers(self, address: int, count: int, unit_id: int = ...) -> list: ...
+    def write_register(self, address: int, value: int): ...

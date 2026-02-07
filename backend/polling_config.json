@@ -1,0 +1,30 @@
+{
+	"duration": 20,
+	"devices": [
+		{
+			"id": "dev-test",
+			"hw_mode": "tcp",
+			"host": "127.0.0.1",
+			"port": 502,
+			"unit_id": 1,
+			"timeout": 2,
+			"retries": 1,
+			"pollers": [
+				{
+					"id": "analog-1",
+					"function": "holding",
+					"address": 0,
+					"count": 10,
+					"interval": 4
+				},
+				{
+					"id": "mixed-1",
+					"function": "holding",
+					"address": 20,
+					"count": 10,
+					"interval": 8
+				}
+			]
+		}
+	]
+}

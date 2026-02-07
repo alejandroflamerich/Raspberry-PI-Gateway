@@ -1,0 +1,5 @@
+[style]
+based_on_style = pep8
+USE_TABS = True
+INDENT_WIDTH = 4
+COLUMN_LIMIT = 120

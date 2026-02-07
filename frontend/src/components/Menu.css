@@ -1,0 +1,36 @@
+.app-sidebar{
+  position:fixed;
+  left:0;
+  top:0;
+  bottom:0;
+  width:220px;
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+  padding:18px 12px;
+  border-right:1px solid rgba(15,118,110,0.06);
+  background: #ffffff;
+  box-shadow: 2px 0 8px rgba(16,24,40,0.04);
+  z-index: 50;
+}
+.sidebar-top{display:flex;flex-direction:column;align-items:flex-start;gap:18px}
+.sidebar-brand{font-weight:700;color:#0f766e;font-size:18px}
+.sidebar-items{display:flex;flex-direction:column;gap:8px}
+.sidebar-btn{
+  background:transparent;
+  border:1px solid rgba(15,118,110,0.06);
+  color:#064e47;
+  padding:10px 12px;
+  border-radius:8px;
+  font-weight:600;
+  cursor:pointer;
+  text-align:left;
+}
+.sidebar-btn:hover{background:rgba(14,165,164,0.06); transform: translateY(-1px)}
+.sidebar-btn.active{background:linear-gradient(180deg,#ecfdf5 0%, #d1fae5 100%); color:#065f58}
+.sidebar-btn.logout{border-color:rgba(185,28,28,0.08); color:#b91c1c}
+
+@media (max-width:900px){
+  .app-sidebar{position:relative;width:100%;height:auto;flex-direction:row;align-items:center;padding:10px}
+  .sidebar-items{flex-direction:row}
+}

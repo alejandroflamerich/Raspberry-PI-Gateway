@@ -1,0 +1,18 @@
+.dashboard-root{
+  padding:18px 24px;
+  margin-left: 240px; /* leave space for left sidebar */
+  padding-top: 24px;
+}
+.health{color:#065f58;margin-bottom:12px}
+.db-section{margin-top:18px}
+.table-wrap{overflow:auto;border:1px solid rgba(15,118,110,0.06);border-radius:8px;background:#fff;padding:8px}
+.things-table{width:100%;border-collapse:collapse}
+.things-table thead th{background:#f1fdf9;color:#065f58;text-align:left;padding:10px;border-bottom:1px solid rgba(15,118,110,0.06)}
+.things-table tbody td{padding:10px;border-bottom:1px solid #f3f4f6}
+.mono{font-family:Menlo, Monaco, 'Courier New', monospace}
+.empty{color:#6b7280;padding:12px}
+.table-controls{display:flex;justify-content:flex-end;margin-bottom:8px}
+.quick-search{padding:8px;border:1px solid #e6f4ef;border-radius:6px;width:320px}
+.sortable{cursor:pointer;user-select:none}
+.sort-ind{margin-left:6px;color:#6b7280;font-size:12px}
+.empty{color:#6b7280}
