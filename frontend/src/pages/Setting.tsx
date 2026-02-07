@@ -41,6 +41,16 @@ export default function Setting(){
     }finally{setSavingEasy(false)}
   }
 
+  async function readEasy(){
+    setSavingEasy(true)
+    try{
+      const r = await api.get('/settings/easyberry')
+      setEasyberry(JSON.stringify(r.data, null, 2))
+    }catch(err:any){
+      alert('Error loading easyberry: '+(err.message||err))
+    }finally{setSavingEasy(false)}
+  }
+
   async function savePolling(){
     setSavingPoll(true)
     try{
@@ -50,6 +60,16 @@ export default function Setting(){
       alert('Polling config saved')
     }catch(err:any){
       alert('Error: '+(err.message||err))
+    }finally{setSavingPoll(false)}
+  }
+
+  async function readPolling(){
+    setSavingPoll(true)
+    try{
+      const r = await api.get('/settings/polling')
+      setPolling(JSON.stringify(r.data, null, 2))
+    }catch(err:any){
+      alert('Error loading polling: '+(err.message||err))
     }finally{setSavingPoll(false)}
   }
 
@@ -65,6 +85,7 @@ export default function Setting(){
             <textarea value={easyberry} onChange={e=>setEasyberry(e.target.value)} spellCheck={false} />
           </div>
           <div className="card-actions">
+            <button className="read-btn" onClick={readEasy} disabled={savingEasy || loading}>{savingEasy? 'Reading...':'Read File'}</button>
             <button className="save-btn" onClick={saveEasy} disabled={savingEasy || loading}>{savingEasy? 'Saving...':'Save Easyberry'}</button>
           </div>
         </section>
@@ -75,6 +96,7 @@ export default function Setting(){
             <textarea value={polling} onChange={e=>setPolling(e.target.value)} spellCheck={false} />
           </div>
           <div className="card-actions">
+            <button className="read-btn" onClick={readPolling} disabled={savingPoll || loading}>{savingPoll? 'Reading...':'Read File'}</button>
             <button className="save-btn" onClick={savePolling} disabled={savingPoll || loading}>{savingPoll? 'Saving...':'Save Polling'}</button>
           </div>
         </section>

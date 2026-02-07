@@ -2,6 +2,7 @@ from fastapi import APIRouter
 from app.api.v1 import health, auth, points
 from app.api.v1 import modbus, debug, settings
 from app.api.v1 import easyberry
+from app.modules.sw.cli import router as cli_router
 
 api_router = APIRouter()
 
@@ -12,3 +13,4 @@ api_router.include_router(modbus.router, prefix="/modbus", tags=["modbus"])
 api_router.include_router(debug.router, prefix="/debug", tags=["debug"])
 api_router.include_router(settings.router, prefix="/settings", tags=["settings"])
 api_router.include_router(easyberry.router, prefix="/easyberry", tags=["easyberry"])
+api_router.include_router(cli_router.router, prefix="/cli", tags=["cli"])

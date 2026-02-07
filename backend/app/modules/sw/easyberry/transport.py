@@ -55,12 +55,22 @@ def send_put(config_path: str, payload: Dict[str, Any]) -> Tuple[int, str]:
             ctype = r.headers.get('content-type')
         except Exception:
             ctype = None
-        eb_packet_store.add(endpoint, req_body, r.text, status=r.status_code, note=None)
-        # attach content_type to the last entry if possible
+        # store request and response bodies and headers
         try:
-            with eb_packet_store._lock:
-                if len(eb_packet_store._deque) > 0:
-                    eb_packet_store._deque[-1]['content_type'] = ctype
+            resp_headers = None
+            try:
+                resp_headers = dict(r.headers)
+            except Exception:
+                resp_headers = None
+            eb_packet_store.add(endpoint, req_body, r.text, status=r.status_code, note=None)
+            try:
+                with eb_packet_store._lock:
+                    if len(eb_packet_store._deque) > 0:
+                        eb_packet_store._deque[-1]['content_type'] = ctype
+                        eb_packet_store._deque[-1]['request_headers'] = headers
+                        eb_packet_store._deque[-1]['response_headers'] = resp_headers
+            except Exception:
+                pass
         except Exception:
             pass
     except Exception:

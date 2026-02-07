@@ -16,8 +16,10 @@ export default function Easyberry(){
   const [lines, setLines] = useState<Exchange[]>([])
   const [loading, setLoading] = useState(true)
   const [running, setRunning] = useState(false)
-  const [settingsInfo, setSettingsInfo] = useState<{url?:string, username?:string, password?:string, context?:string, authPath?:string}>({})
+  const [settingsInfo, setSettingsInfo] = useState<{url?:string, username?:string, password?:string, context?:string, authPath?:string, token?:string}>({})
+  const [showToken, setShowToken] = useState(false)
   const intervalRef = useRef<number | null>(null)
+  const bodyRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(()=>{
     let mounted = true
@@ -32,7 +34,16 @@ export default function Easyberry(){
           if(it.request) out.push({ts: it.ts, direction: 'req', endpoint: it.endpoint || '-', body: it.request, content_type: it.content_type, note: it.note})
           if(it.response) out.push({ts: it.ts, direction: 'resp', endpoint: it.endpoint || '-', body: it.response, content_type: it.content_type, note: it.note})
         })
-        if(mounted) setLines(out.reverse())
+        if(mounted) setLines(prev => {
+          const map = new Map<string, Exchange>()
+          ;[...prev, ...out].forEach(it => {
+            const key = JSON.stringify([it.ts, it.direction, it.endpoint, it.note, it.body])
+            map.set(key, it)
+          })
+          const merged = Array.from(map.values())
+          merged.sort((a,b)=> a.ts.localeCompare(b.ts))
+          return merged.slice(-200)
+        })
       }catch(err){ console.error(err) }
       finally{ if(mounted) setLoading(false) }
     }
@@ -46,7 +57,8 @@ export default function Easyberry(){
           username: settings.username || '',
           password: settings.password || '',
           context: settings.context || '',
-          authPath: settings.authPath || 'auth'
+          authPath: settings.authPath || 'auth',
+          token: settings.token || ''
         })
       }catch(e){ console.error('failed loading settings', e) }
     }
@@ -64,7 +76,13 @@ export default function Easyberry(){
       const base = (st.url || '').replace(/\/+$/,'')
       const context = (st.context || '').replace(/^\/+|\/+$/g, '')
       const authPath = st.authPath || 'auth'
-      const url = [base, context, authPath].filter(Boolean).join('/')
+      let url = ''
+      // if authPath is already an absolute URL, use it as-is; otherwise build from base/context/authPath
+      if (/^https?:\/\//i.test(authPath)) {
+        url = authPath
+      } else {
+        url = [base, context, authPath].filter(Boolean).join('/')
+      }
       const payload = { username: st.username || '', password: st.password || '' }
       const masked = { username: payload.username, password: '***' }
       const ts = new Date().toISOString().replace('T',' ').split('.')[0]
@@ -81,7 +99,8 @@ export default function Easyberry(){
         // refresh settings in case token persisted or fields changed
         try{ const s2 = await api.get('/settings/easyberry'); setSettingsInfo((s2.data && s2.data.settings) || {} ) }catch(_){ }
         // fetch and display any easyberry server exchanges that just occurred
-        await fetchEasyberryPackets()
+        // exclude start-related messages so we don't show the 'started' noise immediately after login
+        await fetchEasyberryPackets({ excludeNotes: ['start response','start error','started','start'] })
       }catch(err:any){
         // Log whatever the server returned so the user can inspect URL/payload and also show it on the page
         const resp = err?.response
@@ -95,22 +114,35 @@ export default function Easyberry(){
           pushLine({ ts: new Date().toISOString().replace('T',' ').split('.')[0], direction: 'resp', endpoint: url, body: String(err), note: 'login exception' })
         }
         // also fetch easyberry exchanges so the actual server reply is shown if present
-        try{ await fetchEasyberryPackets() }catch(_e){ /* ignore */ }
+        try{ await fetchEasyberryPackets({ excludeNotes: ['start response','start error','started','start'] }) }catch(_e){ /* ignore */ }
       }
     }catch(e){ console.error('Login failed', e); pushLine({ ts: new Date().toISOString().replace('T',' ').split('.')[0], direction: 'resp', endpoint: '-', body: String(e), note: 'login exception' }) }
   }
 
-  async function fetchEasyberryPackets(){
+  async function fetchEasyberryPackets(options?: { excludeNotes?: string[] }){
     try{
       const rr = await api.get('/debug/easyberry')
       const items = rr.data.easyberry || []
       const out: Exchange[] = []
+      const exclude = (options && options.excludeNotes) || []
       items.forEach((it:any)=>{
+        const note: string = (it.note || '')
+        const skip = exclude.length > 0 && exclude.some(ex => note.includes(ex))
+        if(skip) return
         if(it.request) out.push({ts: it.ts, direction:'req', endpoint: it.endpoint, body: it.request, content_type: it.content_type, note: it.note})
         if(it.response) out.push({ts: it.ts, direction:'resp', endpoint: it.endpoint, body: it.response, content_type: it.content_type, note: it.note})
       })
-      // prepend the fetched exchanges so they appear at top
-      setLines(prev => [...out.reverse(), ...prev].slice(0,200))
+      // merge fetched items with existing lines (preserve recent local entries)
+      setLines(prev => {
+        const map = new Map<string, Exchange>()
+        ;[...prev, ...out].forEach(it => {
+          const key = JSON.stringify([it.ts, it.direction, it.endpoint, it.note, it.body])
+          map.set(key, it)
+        })
+        const merged = Array.from(map.values())
+        merged.sort((a,b)=> a.ts.localeCompare(b.ts))
+        return merged.slice(-200)
+      })
     }catch(e){ console.error('failed fetching easyberry packets', e) }
   }
 
@@ -141,6 +173,18 @@ export default function Easyberry(){
       // show the put payload in the page log as a request
       pushLine({ ts, direction: 'req', endpoint: url, body: JSON.stringify(payload, null, 2), note: 'put payload' })
 
+      // send current database values once via backend, then start polling
+      try{
+        const sendResp = await api.post('/easyberry/send')
+        pushLine({ ts: new Date().toISOString().replace('T',' ').split('.')[0], direction: 'resp', endpoint: url, body: JSON.stringify(sendResp.data, null, 2), note: 'send response' })
+      }catch(err:any){
+        console.error('Failed to send payload', err)
+        const resp = err?.response
+        const bodyStr = resp && resp.data ? (typeof resp.data === 'string' ? resp.data : JSON.stringify(resp.data, null, 2)) : String(err)
+        pushLine({ ts: new Date().toISOString().replace('T',' ').split('.')[0], direction: 'resp', endpoint: url, body: bodyStr, note: 'send error' })
+        return
+      }
+
       // start backend polling
       try{
         const r = await api.post('/easyberry/start')
@@ -165,7 +209,16 @@ export default function Easyberry(){
               if(it.request) out.push({ts: it.ts, direction:'req', endpoint: it.endpoint, body: it.request, content_type: it.content_type, note: it.note})
               if(it.response) out.push({ts: it.ts, direction:'resp', endpoint: it.endpoint, body: it.response, content_type: it.content_type, note: it.note})
             })
-            setLines(out.reverse())
+            setLines(prev => {
+              const map = new Map<string, Exchange>()
+              ;[...prev, ...out].forEach(it => {
+                const key = JSON.stringify([it.ts, it.direction, it.endpoint, it.note, it.body])
+                map.set(key, it)
+              })
+              const merged = Array.from(map.values())
+              merged.sort((a,b)=> a.ts.localeCompare(b.ts))
+              return merged.slice(-200)
+            })
           }catch(e){ console.error(e) }
         }, 2000)
       }
@@ -177,8 +230,13 @@ export default function Easyberry(){
   }
 
   function pushLine(entry: Exchange){
-    setLines(prev => [entry, ...prev].slice(0, 200))
+    setLines(prev => [...prev, entry].slice(-200))
   }
+
+  // auto-scroll to bottom when lines change
+  useEffect(()=>{
+    try{ if(bodyRef.current){ bodyRef.current.scrollTop = bodyRef.current.scrollHeight } }catch(e){ }
+  },[lines])
 
   function renderBody(l: Exchange){
     const raw = l.body || ''
@@ -214,12 +272,16 @@ export default function Easyberry(){
         <div className="eb-top-actions">
           <div className="left-actions">
             <button className="auth-btn" onClick={doLogin}>App Login</button>
+            
             <button className={`toggle-btn ${running? 'on':''}`} onClick={()=>{ running? stopEasyberryPolling(): startEasyberryPolling() }}>{running? 'Stop Polling':'Start Easyberry Polling'}</button>
+            <button className="clear-btn" onClick={async ()=>{
+              try{ await api.post('/debug/easyberry/clear'); setLines([]) }catch(e){ console.error(e); alert('Failed to clear console') }
+            }}>Clear</button>
           </div>
           
         </div>
 
-        <div className="log-container">
+        <div className="log-container" ref={bodyRef}>
           {loading && <div className="loading">Loading...</div>}
           {!loading && lines.length===0 && <div className="empty">No exchanges yet</div>}
           <ul className="packet-list">

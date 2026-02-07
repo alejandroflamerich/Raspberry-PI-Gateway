@@ -8,6 +8,8 @@
 .card-actions{display:flex;justify-content:flex-end;padding-top:8px}
 .save-btn{background:linear-gradient(180deg,#10b981,#059669);color:#fff;padding:8px 12px;border-radius:8px;border:none;font-weight:600;cursor:pointer}
 .save-btn[disabled]{opacity:0.6;cursor:not-allowed}
+.read-btn{background:linear-gradient(180deg,#10b981,#059669);color:#fff;padding:8px 12px;border-radius:8px;border:none;font-weight:600;cursor:pointer;margin-right:8px}
+.read-btn[disabled]{opacity:0.6;cursor:not-allowed}
 
 @media (max-width:900px){
   .setting-grid{grid-template-columns:1fr;max-height:none}

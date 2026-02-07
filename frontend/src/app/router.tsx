@@ -3,7 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import Login from '../pages/Login'
 import Dashboard from '../pages/Dashboard'
 import Setting from '../pages/Setting'
-import Polling from '../pages/Polling'
+import Polling from '../pages/PollingClean'
 import Easyberry from '../pages/Easyberry'
 import ProtectedRoute from '../components/ProtectedRoute'
 

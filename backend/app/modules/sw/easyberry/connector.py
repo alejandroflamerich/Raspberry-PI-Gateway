@@ -23,13 +23,26 @@ def build_payload_from_database(database) -> Dict[str, Any]:
 
 
 def run_once(config_path: str, database) -> None:
+    # keep compatibility: run_once performs a send but does not return results
+    try:
+        send_once(config_path, database)
+    except Exception:
+        # send_once already logs
+        pass
+
+
+def send_once(config_path: str, database) -> tuple:
+    """Build payload from `database` and send it once. Returns (status_code, body).
+
+    If a 401/403 is received, attempts one re-login and retry.
+    """
     cfg = read_config(config_path)
     payload = build_payload_from_database(database)
     try:
         status, body = send_put(config_path, payload)
     except Exception as e:
         logger.exception("Failed to send payload: %s", e)
-        return
+        raise
 
     if status in (401, 403):
         logger.info("Received %s, refreshing token and retrying once", status)
@@ -37,14 +50,17 @@ def run_once(config_path: str, database) -> None:
             login_and_persist_token(config_path)
         except Exception as e:
             logger.exception("Re-login failed: %s", e)
-            return
+            return status, body
         try:
             status2, body2 = send_put(config_path, payload)
             logger.info("Retry status=%s", status2)
+            return status2, body2
         except Exception as e:
             logger.exception("Retry failed: %s", e)
+            raise
     else:
         logger.info("Send result status=%s", status)
+        return status, body
 
 
 def run_loop(config_path: str, database, stop_event=None) -> None:

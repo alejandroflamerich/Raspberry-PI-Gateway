@@ -68,6 +68,16 @@ async def clear_packets():
         return {'cleared': False, 'error': str(e)}
 
 
+@router.post('/easyberry/clear')
+async def clear_easyberry_packets():
+    """Clear the in-memory easyberry HTTP exchange store."""
+    try:
+        eb_packet_store.clear()
+        return {'cleared': True}
+    except Exception as e:
+        return {'cleared': False, 'error': str(e)}
+
+
 @router.post('/polling/start')
 async def api_start_polling():
     ok = start_example_polling()

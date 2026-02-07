@@ -1,0 +1,12 @@
+.console-root{position:fixed;left:calc(240px + 16px);right:16px;bottom:16px;z-index:9999;font-family:Inter,system-ui,Segoe UI,Roboto,'Helvetica Neue',Arial}
+.console-dock{background:#0b1220;color:#e6eef6;border-radius:8px;box-shadow:0 6px 30px rgba(2,6,23,0.6);display:flex;flex-direction:column;max-height:50vh}
+.console-header{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-bottom:1px solid rgba(255,255,255,0.03)}
+.console-title{font-weight:700}
+.console-body{padding:8px 12px;overflow:auto;max-height:calc(50vh - 110px);font-family:Menlo,monospace;font-size:13px}
+.console-line{margin-bottom:8px}
+.console-input{display:flex;padding:8px;border-top:1px solid rgba(255,255,255,0.02)}
+.console-input input{flex:1;padding:8px;border-radius:6px;border:1px solid rgba(255,255,255,0.04);background:#081021;color:#e6eef6}
+.console-input button{margin-left:8px;padding:8px 12px;border-radius:6px;border:none;background:#0f766e;color:#fff;cursor:pointer}
+.console-collapsed{position:fixed;left:calc(240px + 16px);right:auto;bottom:16px}
+.console-small-btn{background:transparent;border:1px solid rgba(255,255,255,0.04);padding:6px 10px;border-radius:6px;color:#cbd5e1;cursor:pointer}
+.console-help{font-size:12px;color:#9ca3af}

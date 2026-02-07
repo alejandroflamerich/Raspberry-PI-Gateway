@@ -15,6 +15,8 @@ class EasyberryPacketStore:
             'endpoint': endpoint,
             'request': request_body,
             'response': response_body,
+            'request_headers': None,
+            'response_headers': None,
             'content_type': None,
             'status': status,
             'note': note,
