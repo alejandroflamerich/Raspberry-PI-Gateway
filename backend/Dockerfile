@@ -6,7 +6,7 @@ WORKDIR /app
 COPY . /app
 
 # instalar dependencias mínimas + gunicorn para producción
-RUN pip install --no-cache-dir fastapi uvicorn gunicorn PyJWT python-dotenv pydantic-settings
+RUN pip install --no-cache-dir fastapi uvicorn gunicorn PyJWT python-dotenv pydantic-settings httpx
 
 EXPOSE 8000
 
