@@ -1,0 +1,18 @@
+{
+  "duration": 20,
+  "settings": {
+    "authPath": "https://easyberry-iot.example.com/wp-json/jwt-auth/v1/token",
+    "url": "https://easyberry-iot.example.com/wp-json/iot-engine/v2",
+    "username": "your_username",
+    "password": "your_password",
+    "context": "/AC4",
+    "token": ""
+  },
+  "pollers": [
+    {
+      "things": [
+        { "mbid": "2", "name": "AN-5", "value": 0 }
+      ]
+    }
+  ]
+}
