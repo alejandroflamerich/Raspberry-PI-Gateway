@@ -21,6 +21,17 @@ export default function Easyberry(){
   const intervalRef = useRef<number | null>(null)
   const bodyRef = useRef<HTMLDivElement | null>(null)
 
+  function isStartedPayload(raw: any){
+    if(raw === null || raw === undefined) return false
+    if(typeof raw === 'object') return raw.started === true
+    if(typeof raw === 'string'){
+      const s = raw.trim()
+      try{ const o = JSON.parse(s); return o && o.started === true }catch(e){}
+      return s.indexOf('"started": true') !== -1 || s.indexOf("'started': true") !== -1
+    }
+    return false
+  }
+
   useEffect(()=>{
     let mounted = true
     async function load(){
@@ -65,6 +76,17 @@ export default function Easyberry(){
 
     load()
     loadSettings()
+
+    // if user previously started Easyberry polling from the UI, ensure backend is started
+    try{
+      const prev = window.localStorage.getItem('easyberry_user_started')
+      if(prev){
+        // try to (re)start backend polling but do not block UI
+        (async ()=>{
+          try{ await api.post('/easyberry/start'); setRunning(true) }catch(e){ /* ignore: backend may already be running or fail */ }
+        })()
+      }
+    }catch(e){}
 
     return ()=>{ mounted=false; if(intervalRef.current){ clearInterval(intervalRef.current); intervalRef.current = null } }
   },[])
@@ -129,8 +151,8 @@ export default function Easyberry(){
         const note: string = (it.note || '')
         const skip = exclude.length > 0 && exclude.some(ex => note.includes(ex))
         if(skip) return
-        if(it.request) out.push({ts: it.ts, direction:'req', endpoint: it.endpoint, body: it.request, content_type: it.content_type, note: it.note})
-        if(it.response) out.push({ts: it.ts, direction:'resp', endpoint: it.endpoint, body: it.response, content_type: it.content_type, note: it.note})
+        if(it.request && !isStartedPayload(it.request)) out.push({ts: it.ts, direction:'req', endpoint: it.endpoint, body: it.request, content_type: it.content_type, note: it.note})
+        if(it.response && !isStartedPayload(it.response)) out.push({ts: it.ts, direction:'resp', endpoint: it.endpoint, body: it.response, content_type: it.content_type, note: it.note})
       })
       // merge fetched items with existing lines (preserve recent local entries)
       setLines(prev => {
@@ -148,6 +170,11 @@ export default function Easyberry(){
 
   async function startEasyberryPolling(){
     try{
+      // Optimistically mark running so UI updates immediately
+      setRunning(true)
+      // remember user explicitly started polling so it persists across pages
+      try{ window.localStorage.setItem('easyberry_user_started','1') }catch(e){}
+
       // Build payload from current database for display
       const db = await api.get('/debug/database')
       const pollers = (db.data && db.data.pollers) || []
@@ -176,8 +203,10 @@ export default function Easyberry(){
       // send current database values once via backend, then start polling
       try{
         const sendResp = await api.post('/easyberry/send')
-        pushLine({ ts: new Date().toISOString().replace('T',' ').split('.')[0], direction: 'resp', endpoint: url, body: JSON.stringify(sendResp.data, null, 2), note: 'send response' })
+        if(!isStartedPayload(sendResp.data)) pushLine({ ts: new Date().toISOString().replace('T',' ').split('.')[0], direction: 'resp', endpoint: url, body: JSON.stringify(sendResp.data, null, 2), note: 'send response' })
       }catch(err:any){
+        // revert optimistic UI state
+        setRunning(false)
         console.error('Failed to send payload', err)
         const resp = err?.response
         const bodyStr = resp && resp.data ? (typeof resp.data === 'string' ? resp.data : JSON.stringify(resp.data, null, 2)) : String(err)
@@ -188,13 +217,15 @@ export default function Easyberry(){
       // start backend polling
       try{
         const r = await api.post('/easyberry/start')
-        setRunning(true)
-        pushLine({ ts: new Date().toISOString().replace('T',' ').split('.')[0], direction: 'resp', endpoint: url, body: JSON.stringify(r.data, null, 2), note: 'start response' })
+        if(!isStartedPayload(r.data)) pushLine({ ts: new Date().toISOString().replace('T',' ').split('.')[0], direction: 'resp', endpoint: url, body: JSON.stringify(r.data, null, 2), note: 'start response' })
       }catch(err:any){
+        // revert optimistic UI state
+        setRunning(false)
         console.error('Failed to start polling', err)
         const resp = err?.response
         const bodyStr = resp && resp.data ? (typeof resp.data === 'string' ? resp.data : JSON.stringify(resp.data, null, 2)) : String(err)
         pushLine({ ts: new Date().toISOString().replace('T',' ').split('.')[0], direction: 'resp', endpoint: url, body: bodyStr, note: 'start error' })
+        try{ window.localStorage.removeItem('easyberry_user_started') }catch(e){}
         return
       }
 
@@ -206,8 +237,8 @@ export default function Easyberry(){
             const items = rr.data.easyberry || []
             const out: Exchange[] = []
             items.forEach((it:any)=>{
-              if(it.request) out.push({ts: it.ts, direction:'req', endpoint: it.endpoint, body: it.request, content_type: it.content_type, note: it.note})
-              if(it.response) out.push({ts: it.ts, direction:'resp', endpoint: it.endpoint, body: it.response, content_type: it.content_type, note: it.note})
+              if(it.request && !isStartedPayload(it.request)) out.push({ts: it.ts, direction:'req', endpoint: it.endpoint, body: it.request, content_type: it.content_type, note: it.note})
+              if(it.response && !isStartedPayload(it.response)) out.push({ts: it.ts, direction:'resp', endpoint: it.endpoint, body: it.response, content_type: it.content_type, note: it.note})
             })
             setLines(prev => {
               const map = new Map<string, Exchange>()
@@ -226,7 +257,7 @@ export default function Easyberry(){
   }
 
   async function stopEasyberryPolling(){
-    try{ await api.post('/easyberry/stop'); setRunning(false); if(intervalRef.current){ clearInterval(intervalRef.current); intervalRef.current = null } }catch(e){ console.error(e); pushLine({ ts: new Date().toISOString().replace('T',' ').split('.')[0], direction: 'resp', endpoint: '-', body: String(e), note: 'stop exception' }) }
+    try{ await api.post('/easyberry/stop'); setRunning(false); try{ window.localStorage.removeItem('easyberry_user_started') }catch(e){}; if(intervalRef.current){ clearInterval(intervalRef.current); intervalRef.current = null } }catch(e){ console.error(e); pushLine({ ts: new Date().toISOString().replace('T',' ').split('.')[0], direction: 'resp', endpoint: '-', body: String(e), note: 'stop exception' }) }
   }
 
   function pushLine(entry: Exchange){

@@ -194,7 +194,11 @@ class Poller(threading.Thread):
         return self._stop_ev.is_set()
 
     def run(self) -> None:
+        # fixed-period scheduling: run work immediately, then aim to run at start_time + n*interval
+        next_run = time.time()
         while not self._stop_ev.is_set():
+            # schedule next run based on fixed period
+            next_run += self.interval
             try:
                 if self.function == "holding":
                     res = self.client.read_holding_registers(self.address, self.count, unit_id=self.unit_id)
@@ -289,12 +293,15 @@ class Poller(threading.Thread):
                     self.callback(None, e)
                 except Exception:
                     logger.exception("Poller callback error handler failed")
-            # sleep with early exit
-            slept = 0.0
-            step = 0.1
-            while slept < self.interval and not self._stop_ev.is_set():
-                time.sleep(min(step, self.interval - slept))
-                slept += step
+
+            # wait until the next scheduled run (allow early exit)
+            while not self._stop_ev.is_set():
+                now = time.time()
+                remaining = next_run - now
+                if remaining <= 0:
+                    break
+                # sleep in small increments so we can exit quickly
+                time.sleep(min(0.1, remaining))
 
 
 def polling_example(config_path: str = "polling_config.json"):
@@ -368,10 +375,25 @@ def polling_example(config_path: str = "polling_config.json"):
                 name=full_pid,
                 poller_id=full_pid,
             )
+            try:
+                logger.info("Created poller %s interval=%s", full_pid, pconf.get("interval"))
+                # also print to stdout to ensure visibility in all environments
+                print(f"[polling-debug] Created poller {full_pid} interval={pconf.get('interval')}")
+            except Exception:
+                pass
             pollers.append(poller)
 
     for p in pollers:
-        p.start()
+        try:
+            p.start()
+            logger.info("Started poller %s interval=%s", getattr(p, 'name', None), getattr(p, 'interval', None))
+            # print to stdout as well for immediate feedback in consoles
+            try:
+                print(f"[polling-debug] Started poller {getattr(p, 'name', None)} interval={getattr(p, 'interval', None)}")
+            except Exception:
+                pass
+        except Exception:
+            logger.exception("Failed to start poller %s", getattr(p, 'name', None))
 
     return manager, pollers
 
