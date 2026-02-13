@@ -1,0 +1,25 @@
+.dataflow-root{width:100%;display:flex;align-items:center;justify-content:center;margin-bottom:18px;position:relative}
+.dataflow-root .nodes{width:600px;display:flex;justify-content:space-between;align-items:center;position:relative;z-index:2}
+.node{display:flex;flex-direction:column;align-items:center;gap:6px}
+.node img{width:72px;height:72px;object-fit:contain;border-radius:8px}
+.node .label{font-size:13px;color:#374151}
+.connectors{position:absolute;left:50%;transform:translateX(-50%) translateY(-50%);top:50%;width:600px;height:100px;pointer-events:none;z-index:1}
+/* default: barely visible when inactive, vivid when active */
+.line{opacity:0.28;stroke-dasharray:12 8;transition:opacity .14s}
+.line.active{opacity:1}
+/* green top line glow */
+.line.top.active{filter:drop-shadow(0 0 8px rgba(16,185,129,0.25))}
+/* black bottom line subtle glow */
+.line.bottom.active{filter:drop-shadow(0 0 6px rgba(15,23,42,0.18))}
+/* make top/bottom dash patterns subtly different so both lines read as separate */
+.line.top{stroke-dasharray:10 6 !important; will-change: stroke-dashoffset}
+.line.bottom{stroke-dasharray:6 6 !important}
+/* staggered animations for top/bottom lines to create a flowing effect */
+.line.top.active{animation:flow-left 0.9s linear infinite; animation-fill-mode:both}
+.line.bottom.active{animation:flow-right 1.2s linear infinite; animation-fill-mode:both}
+@keyframes flow-left{from{stroke-dashoffset:0px}to{stroke-dashoffset:-40px}}
+@keyframes flow-right{from{stroke-dashoffset:0px}to{stroke-dashoffset:40px}}
+@media(max-width:700px){
+  .dataflow-root .nodes{width:100%;padding:0 16px}
+  .connectors{left:0;transform:none;width:100%;}
+}

@@ -1,11 +1,12 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { login } from '../services/auth'
+import api from '../services/api'
 import './Login.css'
 
 export default function Login(){
-  const [username, setUsername] = useState('admin')
-  const [password, setPassword] = useState('password')
+  const [username, setUsername] = useState('')
+  const [password, setPassword] = useState('')
   const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -18,6 +19,18 @@ export default function Login(){
     setLoading(false)
     if(ok) navigate('/dashboard')
     else setError('Login failed — check username and password')
+  }
+
+  async function forgot(){
+    if(!confirm('This will reset configuration and remove stored credentials. Continue?')) return
+    try{
+      await api.post('/auth/forgot')
+      alert('Configuration reset. Please login again with a new password.')
+      setUsername('')
+      setPassword('')
+    }catch(e){
+      alert('Failed to reset configuration')
+    }
   }
 
   return (
@@ -54,6 +67,9 @@ export default function Login(){
 
           <div className="actions">
             <button className="btn" type="submit" disabled={loading}>{loading ? 'Signing in…' : 'Sign in'}</button>
+          </div>
+          <div className="forgot-link">
+            <button type="button" className="forgot-link-btn" onClick={forgot}>Forgot password</button>
           </div>
         </form>
 

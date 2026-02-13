@@ -11,7 +11,11 @@
   "pollers": [
     {
       "things": [
-        { "mbid": "2", "name": "AN-5", "value": 0 }
+        { "mbid": "2", "name": "AN", "value": 0 },
+        { "mbid": "3", "name": "AN-3", "value": 0 },
+        { "mbid": "4", "name": "AN-5", "value": 0 },
+        { "mbid": "5", "name": "AN-6", "value": 0 },
+        { "mbid": "6", "name": "AN-7", "value": 0 }
       ]
     }
   ]

@@ -66,9 +66,41 @@ def send_once(config_path: str, database) -> tuple:
 def run_loop(config_path: str, database, stop_event=None) -> None:
     cfg = read_config(config_path)
     duration = cfg.get("duration", 30)
+    iteration = 0
+    # Keep running until an external stop_event is set by the runner.stop() call.
+    # Use stop_event.wait(timeout) when available so the loop is interruptible
+    # and will stop promptly when the stop button is pressed.
     while True:
+        iteration += 1
+        logger.debug("run_loop: starting iteration %d", iteration)
         if stop_event is not None and getattr(stop_event, "is_set", lambda: False)():
             logger.info("run_loop: stop event set, exiting")
             break
-        run_once(config_path, database)
-        time.sleep(duration)
+        try:
+            run_once(config_path, database)
+        except Exception:
+            # run_once already logs failures; continue looping so polling remains active
+            logger.exception("run_loop: run_once failed, continuing loop")
+        else:
+            logger.debug("run_loop: iteration %d completed successfully", iteration)
+
+        # If a stop_event was provided, prefer waiting on it (interruptible).
+        if stop_event is not None:
+            # If duration is falsy (0, None, negative) wait indefinitely until stop
+            try:
+                if duration is None or (isinstance(duration, (int, float)) and duration <= 0):
+                    logger.debug("run_loop: waiting indefinitely until stop_event")
+                    stop_event.wait()
+                    # loop will re-check is_set at top and exit
+                else:
+                    stop_event.wait(duration)
+            except Exception:
+                # In case stop_event.wait isn't available for some reason, fallback to sleep
+                time.sleep(duration if duration and duration > 0 else 1)
+        else:
+            # No stop_event available; fall back to sleeping
+            try:
+                time.sleep(duration if duration and duration > 0 else 1)
+            except Exception:
+                # ignore sleep interruptions and continue
+                pass

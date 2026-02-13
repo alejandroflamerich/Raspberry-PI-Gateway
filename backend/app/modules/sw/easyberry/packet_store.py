@@ -1,6 +1,10 @@
 import threading
 from collections import deque
 from typing import Optional
+import logging
+import uuid
+
+logger = logging.getLogger(__name__)
 
 
 class EasyberryPacketStore:
@@ -11,6 +15,7 @@ class EasyberryPacketStore:
     def add(self, endpoint: str, request_body: Optional[str], response_body: Optional[str], status: Optional[int] = None, note: Optional[str] = None):
         import time
         entry = {
+            'id': str(uuid.uuid4()),
             'ts': time.time(),
             'endpoint': endpoint,
             'request': request_body,
@@ -23,6 +28,10 @@ class EasyberryPacketStore:
         }
         with self._lock:
             self._deque.append(entry)
+            try:
+                logger.info("Easyberry: packet added endpoint=%s status=%s note=%s", endpoint, status, note)
+            except Exception:
+                pass
 
     def get_last(self, limit: int = 200):
         with self._lock:

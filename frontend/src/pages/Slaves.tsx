@@ -2,7 +2,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import Menu from '../components/Menu'
 import api from '../services/api'
-import './Polling.css'
+import './Slaves.css'
 
 type PacketLine = {
   ts: string
@@ -13,16 +13,24 @@ type PacketLine = {
   status?: string | null
 }
 
-export default function Polling(){
+export default function Slaves(){
   const [lines, setLines] = useState<PacketLine[]>([])
   const linesRef = useRef<PacketLine[]>(lines)
   const bodyRef = useRef<HTMLDivElement | null>(null)
   const [loading, setLoading] = useState(true)
   const [running, setRunning] = useState<boolean>(false)
+  const [deviceNames, setDeviceNames] = useState<Record<string,string>>({})
+  const [devicesList, setDevicesList] = useState<any[]>([])
   const intervalRef = useRef<number | null>(null)
   const userStarted = useRef<boolean>(false)
   const statusIntervalRef = useRef<number | null>(null)
   const lastLoadId = useRef<number>(0)
+  const loadPacketsOnceRef = useRef<() => void>(() => {})
+
+  function normalizePollerId(raw:any){
+    const s = String(raw || '').trim()
+    return s.replace(/^\d+-/, '')
+  }
 
   // keep a ref in sync to avoid stale closures inside async loops
   useEffect(()=>{ linesRef.current = lines }, [lines])
@@ -52,12 +60,11 @@ export default function Polling(){
   useEffect(()=>{
     const req = { current: 0 }
 
-    async function fetchPacketsOnce(){
+    loadPacketsOnceRef.current = () => {
       const my = ++req.current
       if(linesRef.current.length === 0) setLoading(true)
-      try{
-        console.debug('[Polling] fetchPacketsOnce start', my)
-        const r = await api.get('/debug/packets')
+      console.debug('[Polling] fetchPacketsOnce start', my)
+      api.get('/debug/packets').then(r => {
         const items = r.data.packets || []
         const out: PacketLine[] = []
         items.forEach((it: any) => {
@@ -66,14 +73,39 @@ export default function Polling(){
         })
         out.sort((a,b)=>a.ts.localeCompare(b.ts))
         if(my === req.current){ setLines(out.slice()); console.debug('[Polling] fetchPacketsOnce setLines', out.length, 'req', my) }
-      }catch(err){ console.error('[Polling] fetch error', err) }finally{ setLoading(false) }
+      }).catch(err => {
+        console.error('[Polling] fetch error', err)
+      }).finally(()=>{
+        setLoading(false)
+      })
     }
 
-    function startLocalLoop(){ if(intervalRef.current) return; fetchPacketsOnce(); intervalRef.current = window.setInterval(fetchPacketsOnce, 2000) }
+    function startLocalLoop(){ if(intervalRef.current) return; loadPacketsOnceRef.current(); intervalRef.current = window.setInterval(()=>loadPacketsOnceRef.current(), 2000) }
     function stopLocalLoop(){ if(intervalRef.current){ clearInterval(intervalRef.current); intervalRef.current = null } }
 
     // initial fetch and always start local loop so returning to page resumes live updates
-    fetchPacketsOnce()
+    loadPacketsOnceRef.current()
+
+    // load device names from polling config for display (poller id -> device.id)
+    (async ()=>{
+      try{
+        const cfg = await api.get('/settings/polling')
+        const data = cfg.data || {}
+        const devices = Array.isArray(data.devices) ? data.devices : []
+        const map: Record<string,string> = {}
+        devices.forEach((dev:any)=>{
+          const devId = dev.id || dev.name || dev.label || String(dev.host || '')
+          const pollers = Array.isArray(dev.pollers) ? dev.pollers : []
+          pollers.forEach((p: any)=>{
+            const pid = p && (p.id || (p.id === 0 ? 0 : undefined))
+            const pidKey = pid !== undefined && pid !== null ? String(pid).trim() : undefined
+            if(pidKey !== undefined && pidKey !== null){ map[pidKey] = String(devId) }
+          })
+        })
+        setDevicesList(devices)
+        setDeviceNames(map)
+      }catch(e){ /* ignore */ }
+    })()
 
     api.get('/debug/polling/status').then(r=>{
       const isRunning = Boolean(r.data.running)
@@ -196,21 +228,39 @@ export default function Polling(){
   return (
     <div>
       <Menu />
-      <main className="polling-root">
-        <h2>Polling Packet Log</h2>
-        <div className="log-actions">
-          <button className={`toggle-btn ${running? 'on':''}`} onClick={toggleRunning}>{running? 'Stop Polling':'Start Polling'}</button>
-          <button className="clear-btn" onClick={clearConsole}>Clear</button>
+      <main className="sc-polling-root">
+        <h2>Slaves</h2>
+        <div className="sc-log-actions">
+          <button className={`sc-toggle-btn ${running? 'on':''}`} onClick={toggleRunning}>{running? 'Stop Polling':'Start Polling'}</button>
+          <button className="sc-clear-btn" onClick={clearConsole}>Clear</button>
         </div>
-        <div className="log-container">
-          {loading && lines.length===0 && <div className="loading">Loading...</div>}
-          {!loading && lines.length===0 && <div className="empty">No packets yet</div>}
-          <ul className="packet-list">
+        <div className="sc-log-container">
+          {loading && lines.length===0 && <div className="sc-loading">Loading...</div>}
+          {!loading && lines.length===0 && <div className="sc-empty">No packets yet</div>}
+          <ul className="sc-packet-list">
+            <li className="sc-packet-header">
+              <div className="sc-pl-time">time</div>
+              <div className="sc-pl-device">device</div>
+              <div className="sc-pl-polling">poller</div>
+              <div className="sc-pl-data">data</div>
+            </li>
             {lines.map((l, idx)=> (
-              <li key={idx} className={`packet-line ${l.direction==='req'?'req':'resp'}`}>
-                <div className="pl-time">{l.ts}</div>
-                <div className="pl-device">{l.poller_id} {l.status && <span className={`pl-status ${l.status==='OK'?'ok':'err'}`}>{l.status}</span>}</div>
-                <div className="pl-data">{l.data || '-'}</div>
+              <li key={idx} className={`sc-packet-line ${l.direction==='req'?'req':'resp'}`}>
+                <div className="sc-pl-time">{l.ts}</div>
+                <div className="sc-pl-device">{(()=>{
+                    const lid = normalizePollerId(l.poller_id)
+                    if(deviceNames[lid]) return deviceNames[lid]
+                    for(const d of devicesList){
+                      const pls = Array.isArray(d.pollers) ? d.pollers : []
+                      if(pls.find((pp:any)=>{
+                        const pid = String(pp.id || '').trim()
+                        return pid === lid || pid.replace(/^\d+-/, '') === lid
+                      })) return d.id || d.name || d.label || '-'
+                    }
+                    return '-'
+                  })()}</div>
+                <div className="sc-pl-polling">{l.poller_id} {l.status && <span className={`sc-pl-status ${l.status==='OK'?'ok':'err'}`}>{l.status}</span>}</div>
+                <div className="sc-pl-data">{l.data || '-'}</div>
               </li>
             ))}
           </ul>

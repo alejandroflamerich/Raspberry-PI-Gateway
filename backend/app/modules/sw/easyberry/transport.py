@@ -1,5 +1,7 @@
+
 import logging
 from typing import Dict, Any, Tuple
+import json
 
 import httpx
 
@@ -39,7 +41,7 @@ def send_put(config_path: str, payload: Dict[str, Any]) -> Tuple[int, str]:
         try:
             eb_packet_store.add(endpoint, json.dumps(payload, ensure_ascii=False), None, status=None, note=str(e))
         except Exception:
-            pass
+            logger.debug("transport: failed to record exception payload in packet store")
         raise
 
     # record successful exchange
@@ -70,9 +72,9 @@ def send_put(config_path: str, payload: Dict[str, Any]) -> Tuple[int, str]:
                         eb_packet_store._deque[-1]['request_headers'] = headers
                         eb_packet_store._deque[-1]['response_headers'] = resp_headers
             except Exception:
-                pass
-        except Exception:
-            pass
+                logger.debug("transport: failed to attach headers/content_type to last packet")
+        except Exception as e:
+            logger.exception("transport: failed to record successful exchange: %s", e)
     except Exception:
         pass
 

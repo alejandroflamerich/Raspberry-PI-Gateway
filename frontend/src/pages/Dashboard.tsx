@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import api from '../services/api'
 import Menu from '../components/Menu'
+import DataFlow from '../components/DataFlow'
 import './Dashboard.css'
 
 export default function Dashboard(){
@@ -80,6 +81,7 @@ export default function Dashboard(){
     <div>
       <Menu />
       <main className="dashboard-root">
+        <DataFlow />
         <h1>Dashboard</h1>
         <div className="health">Backend health: {health}</div>
 

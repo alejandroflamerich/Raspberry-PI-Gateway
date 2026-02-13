@@ -73,6 +73,10 @@
 }
 .login-footer{margin-top:14px;text-align:center}
 
+.forgot-link{margin-top:12px;text-align:center}
+.forgot-link-btn{background:none;border:none;color:#0f766e;text-decoration:underline;cursor:pointer;font-size:13px;padding:0}
+.forgot-link-btn:focus{outline:none;text-decoration:underline}
+
 @media (max-width:420px){
   .login-card{width:100%; padding:20px; border-radius:10px}
 }

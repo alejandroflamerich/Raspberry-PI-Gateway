@@ -23,10 +23,10 @@ Deja esta terminal corriendo (verás logs). Si hay errores, pégamelos.
 
 Obtener token JWT (nueva terminal):
 Usando curl (Git Bash / WSL / Linux):
-curl -s -X POST "http://127.0.0.1:8000/api/v1/auth/login\" -H "Content-Type: application/json" -d '{"username":"admin","password":"password"}'
+curl -s -X POST "http://127.0.0.1:8000/api/v1/auth/login\" -H "Content-Type: application/json" -d '{"username":"admin","password":"Admin2026"}'
 
 PowerShell:
-$body = '{"username":"admin","password":"password"}'; Invoke-RestMethod -Uri http://127.0.0.1:8000/api/v1/auth/login -Method Post -Body $body -ContentType 'application/json'
+$body = '{"username":"admin","password":"Admin2026"}'; Invoke-RestMethod -Uri http://127.0.0.1:8000/api/v1/auth/login -Method Post -Body $body -ContentType 'application/json'
 
 La respuesta contendrá access_token. Cópialo.
 

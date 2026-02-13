@@ -139,8 +139,9 @@ def main():
         def _cb(res, err):
             if err:
                 logger.warning("%s poll error: %s", name, err)
-            else:
-                logger.info("%s poll result: %s", name, res)
+            #else:
+                #logger.info("%s poll result: %s", name, res)
+
 
         return _cb
 

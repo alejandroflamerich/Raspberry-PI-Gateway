@@ -29,6 +29,7 @@ Thumbs.db
 
 # Docker
 docker-compose.override.yml
+/*.yml
 
 # VS Code
 .history/
@@ -36,6 +37,7 @@ docker-compose.override.yml
 # Local config that may contain secrets
 backend/easyberry_config.json
 frontend/.env
+backend/.secrets/
 
 # Logs and databases
 *.log
@@ -44,4 +46,7 @@ frontend/.env
 # Optional: cover build artifacts
 coverage/
 reports/
+
+# Local folder with files not meant for git
+nogit/
 

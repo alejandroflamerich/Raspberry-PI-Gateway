@@ -5,7 +5,7 @@ client = TestClient(app)
 
 
 def test_login_and_protected():
-    r = client.post("/api/v1/auth/login", json={"username": "admin", "password": "password"})
+    r = client.post("/api/v1/auth/login", json={"username": "admin", "password": "Admin2026"})
     assert r.status_code == 200
     token = r.json().get("access_token")
     assert token

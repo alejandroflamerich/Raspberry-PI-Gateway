@@ -3,7 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import Login from '../pages/Login'
 import Dashboard from '../pages/Dashboard'
 import Setting from '../pages/Setting'
-import Polling from '../pages/PollingClean'
+import Slaves from '../pages/PollingClean'
 import Easyberry from '../pages/Easyberry'
 import ProtectedRoute from '../components/ProtectedRoute'
 
@@ -21,8 +21,8 @@ export default function Router() {
         element={<ProtectedRoute><Setting /></ProtectedRoute>}
       />
       <Route
-        path="/polling"
-        element={<ProtectedRoute><Polling /></ProtectedRoute>}
+        path="/slaves"
+        element={<ProtectedRoute><Slaves /></ProtectedRoute>}
       />
       <Route
         path="/easyberry"

@@ -6,10 +6,10 @@
 .json-edit{flex:1 1 auto;overflow:auto;border:1px solid rgba(15,118,110,0.04);border-radius:6px;padding:6px;background:#f8faf9;min-height:0}
 .json-edit textarea{width:100%;height:100%;border:0;resize:none;background:transparent;font-family:Menlo, Monaco, 'Courier New', monospace;font-size:13px;color:#0f172a}
 .card-actions{display:flex;justify-content:flex-end;padding-top:8px}
-.save-btn{background:linear-gradient(180deg,#10b981,#059669);color:#fff;padding:8px 12px;border-radius:8px;border:none;font-weight:600;cursor:pointer}
-.save-btn[disabled]{opacity:0.6;cursor:not-allowed}
-.read-btn{background:linear-gradient(180deg,#10b981,#059669);color:#fff;padding:8px 12px;border-radius:8px;border:none;font-weight:600;cursor:pointer;margin-right:8px}
-.read-btn[disabled]{opacity:0.6;cursor:not-allowed}
+.action-btn{background:linear-gradient(180deg,#10b981,#059669);color:#fff;padding:8px 12px;border-radius:8px;border:none;font-weight:600;cursor:pointer;margin-left:8px;min-width:120px;text-align:center}
+.action-btn[disabled]{opacity:0.6;cursor:not-allowed}
+.download-btn{background:linear-gradient(180deg,#374151,#0f172a);color:#fff;padding:8px 12px;border-radius:8px;border:none;font-weight:600;cursor:pointer;margin-left:8px;min-width:120px;text-align:center}
+.download-btn[disabled]{opacity:0.6;cursor:not-allowed}
 
 @media (max-width:900px){
   .setting-grid{grid-template-columns:1fr;max-height:none}

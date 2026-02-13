@@ -1,4 +1,5 @@
 import api from "./api";
+import { useAuth } from "../store/authStore";
 
 export async function login(username: string, password: string) {
 	try {
@@ -7,6 +8,8 @@ export async function login(username: string, password: string) {
 		console.info("auth.login: response", { status: r.status, data: r.data });
 		const token = r.data.access_token;
 		window.localStorage.setItem("token", token);
+		// update global store so UI reacts immediately
+		try{ useAuth.getState().setToken(token) }catch(e){}
 		return true;
 	} catch (e) {
 		console.error("auth.login: failed", e);
@@ -16,4 +19,5 @@ export async function login(username: string, password: string) {
 
 export function logout() {
 	window.localStorage.removeItem("token");
+	try{ useAuth.getState().setToken(null) }catch(e){}
 }

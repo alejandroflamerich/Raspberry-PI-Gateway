@@ -32,7 +32,9 @@ export default function Setting(){
   async function saveEasy(){
     setSavingEasy(true)
     try{
-      const parsed = JSON.parse(easyberry)
+      // validate JSON before saving
+      let parsed
+      try{ parsed = JSON.parse(easyberry) }catch(err:any){ throw new Error('Invalid JSON: '+ (err.message||err)) }
       const res = await api.post('/settings/easyberry', parsed)
       if(!res || res.status >= 400) throw new Error('Save failed')
       alert('Easyberry config saved')
@@ -54,13 +56,35 @@ export default function Setting(){
   async function savePolling(){
     setSavingPoll(true)
     try{
-      const parsed = JSON.parse(polling)
+      // validate JSON before saving
+      let parsed
+      try{ parsed = JSON.parse(polling) }catch(err:any){ throw new Error('Invalid JSON: '+ (err.message||err)) }
       const res = await api.post('/settings/polling', parsed)
       if(!res || res.status >= 400) throw new Error('Save failed')
       alert('Polling config saved')
     }catch(err:any){
       alert('Error: '+(err.message||err))
     }finally{setSavingPoll(false)}
+  }
+
+  function validateEasy(){
+    try{ JSON.parse(easyberry); alert('Easyberry JSON is valid') }catch(err:any){ alert('Invalid Easyberry JSON: '+(err.message||err)) }
+  }
+
+  function validatePolling(){
+    try{ JSON.parse(polling); alert('Polling JSON is valid') }catch(err:any){ alert('Invalid Polling JSON: '+(err.message||err)) }
+  }
+
+  function downloadJson(filename: string, content: string){
+    const blob = new Blob([content], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = filename
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    URL.revokeObjectURL(url)
   }
 
   async function readPolling(){
@@ -85,8 +109,10 @@ export default function Setting(){
             <textarea value={easyberry} onChange={e=>setEasyberry(e.target.value)} spellCheck={false} />
           </div>
           <div className="card-actions">
-            <button className="read-btn" onClick={readEasy} disabled={savingEasy || loading}>{savingEasy? 'Reading...':'Read File'}</button>
-            <button className="save-btn" onClick={saveEasy} disabled={savingEasy || loading}>{savingEasy? 'Saving...':'Save Easyberry'}</button>
+            <button className="action-btn" onClick={readEasy} disabled={savingEasy || loading}>{savingEasy? 'Reading...':'Read File'}</button>
+            <button className="action-btn" onClick={validateEasy} disabled={savingEasy || loading}>Validate</button>
+            <button className="action-btn" onClick={saveEasy} disabled={savingEasy || loading}>{savingEasy? 'Saving...':'Save'}</button>
+            <button className="download-btn" onClick={()=>downloadJson('easyberry_config.json', easyberry)} disabled={savingEasy || loading}>Download</button>
           </div>
         </section>
 
@@ -96,8 +122,10 @@ export default function Setting(){
             <textarea value={polling} onChange={e=>setPolling(e.target.value)} spellCheck={false} />
           </div>
           <div className="card-actions">
-            <button className="read-btn" onClick={readPolling} disabled={savingPoll || loading}>{savingPoll? 'Reading...':'Read File'}</button>
-            <button className="save-btn" onClick={savePolling} disabled={savingPoll || loading}>{savingPoll? 'Saving...':'Save Polling'}</button>
+            <button className="action-btn" onClick={readPolling} disabled={savingPoll || loading}>{savingPoll? 'Reading...':'Read File'}</button>
+            <button className="action-btn" onClick={validatePolling} disabled={savingPoll || loading}>Validate</button>
+            <button className="action-btn" onClick={savePolling} disabled={savingPoll || loading}>{savingPoll? 'Saving...':'Save'}</button>
+            <button className="download-btn" onClick={()=>downloadJson('polling_config.json', polling)} disabled={savingPoll || loading}>Download</button>
           </div>
         </section>
         </div>

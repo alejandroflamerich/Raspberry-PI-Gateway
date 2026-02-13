@@ -46,15 +46,30 @@ async def get_easyberry_packets(limit: int = 200):
     out = []
     for it in items:
         ts = datetime.datetime.fromtimestamp(it['ts']).strftime('%Y-%m-%d %H:%M:%S')
-        out.append({
-            'ts': ts,
-            'endpoint': it.get('endpoint'),
+        base_id = it.get('id') or None
+        # Emit separate items for request and response so frontend can show both lines
+        if it.get('request') is not None:
+            out.append({
+                'id': f"{base_id}-req" if base_id else None,
+                'ts': ts,
+                'endpoint': it.get('endpoint'),
                 'status': it.get('status'),
                 'content_type': it.get('content_type'),
                 'request': it.get('request'),
+                'response': None,
+                'note': it.get('note'),
+            })
+        if it.get('response') is not None:
+            out.append({
+                'id': f"{base_id}-resp" if base_id else None,
+                'ts': ts,
+                'endpoint': it.get('endpoint'),
+                'status': it.get('status'),
+                'content_type': it.get('content_type'),
+                'request': None,
                 'response': it.get('response'),
-            'note': it.get('note'),
-        })
+                'note': it.get('note'),
+            })
     return {'easyberry': out}
 
 
