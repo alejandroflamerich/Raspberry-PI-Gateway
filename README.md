@@ -27,3 +27,6 @@ Quick plan of what to do next (Windows PowerShell):
 Checks:
 - GET http://localhost:8000/api/v1/health
 - Frontend: http://localhost:5173
+
+Explainer video
+- https://youtu.be/NhdJfKgNIPw
